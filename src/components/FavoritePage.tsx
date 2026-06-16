@@ -75,7 +75,7 @@ export default function FavoritePage({
         <p className="text-sm text-slate-500 font-medium font-sans">
           Kurasi Pilihan Keluarga persembahan{' '}
           <a
-            href="https://teman-parenting-1081711046276.asia-southeast1.run.app/"
+            href="https://temanparenting.web.id/"
             target="_blank"
             rel="noopener noreferrer"
             className="text-teal-600 font-semibold hover:underline"

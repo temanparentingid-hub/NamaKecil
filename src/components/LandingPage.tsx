@@ -16,7 +16,7 @@ export default function LandingPage({ onStartSearch, onStartOnboarding, onGoToPo
       {/* Hero Section */}
       <div className="text-center space-y-6 md:space-y-8 mb-16" id="hero-header">
         <a 
-          href="https://teman-parenting-1081711046276.asia-southeast1.run.app/" 
+          href="https://temanparenting.web.id/" 
           target="_blank" 
           rel="noopener noreferrer" 
           className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-brand-mint text-brand-teal text-xs font-semibold tracking-wide hover:bg-brand-mint/90 hover:shadow-sm hover:shadow-brand-teal/10 transition-all duration-300 transform hover:scale-105 active:scale-95 group"
@@ -112,7 +112,7 @@ export default function LandingPage({ onStartSearch, onStartOnboarding, onGoToPo
             <p className="text-xs text-brand-darklight">
               Pilihan teratas Moms & Dads di komunitas{' '}
               <a 
-                href="https://teman-parenting-1081711046276.asia-southeast1.run.app/" 
+                href="https://temanparenting.web.id/" 
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="text-brand-teal font-semibold hover:underline"
