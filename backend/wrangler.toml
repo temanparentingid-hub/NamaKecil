@@ -1,0 +1,9 @@
+name = "namakecil-backend"
+main = "src/index.ts"
+compatibility_date = "2026-06-19"
+
+# D1 Database bindings
+[[d1_databases]]
+binding = "DB"
+database_name = "namakecil-db"
+database_id = "ae08b5e0-256c-4a0b-a47f-4af50bf72262"

@@ -15,8 +15,10 @@ import FavoritePage from './components/FavoritePage';
 import ComparisonPage from './components/ComparisonPage';
 import UnlockModal from './components/UnlockModal';
 import FeedbackModal from './components/FeedbackModal';
+import UserAccessPage from './components/UserAccessPage';
+import { accessCodesApi } from './utils/accessCodesStorage';
 
-import { Sparkles, Heart, Search, Wand2, Home, Compass, Bookmark, MessageCircle, RefreshCw, X, Lock } from 'lucide-react';
+import { Sparkles, Heart, Search, Wand2, Home, Compass, Bookmark, MessageCircle, RefreshCw, X, Lock, Users } from 'lucide-react';
 
 const LOCAL_STORAGE_KEY = 'namakecil_favorites_v1';
 
@@ -49,21 +51,88 @@ const DEFAULT_FAVORITES: FavoriteName[] = [
 ];
 
 export default function App() {
-  const [view, setView] = useState<'landing' | 'onboarding' | 'cari' | 'detail' | 'favorit' | 'generator' | 'bandingkan'>('landing');
+  const [view, setView] = useState<'landing' | 'onboarding' | 'cari' | 'detail' | 'favorit' | 'generator' | 'bandingkan' | 'admin'>('landing');
   const [selectedNameId, setSelectedNameId] = useState<string | null>(null);
   const [favorites, setFavorites] = useState<FavoriteName[]>([]);
   const [compareIds, setCompareIds] = useState<string[]>([]);
   const [onboardingPref, setOnboardingPref] = useState<OnboardingState | null>(null);
   
-  const [isUnlocked, setIsUnlocked] = useState<boolean>(() => {
+  const [userCodes, setUserCodes] = useState<string[]>([]);
+  const [activeCode, setActiveCode] = useState<string | null>(() => {
     try {
-      return localStorage.getItem('namakecil_unlocked') === 'true';
+      return localStorage.getItem('namakecil_active_code');
     } catch {
-      return false;
+      return null;
     }
   });
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [isUnlocked, setIsUnlocked] = useState<boolean>(false);
+  
   const [isUnlockModalOpen, setIsUnlockModalOpen] = useState(false);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
+
+  // Load access codes on startup
+  useEffect(() => {
+    const loadCodes = async () => {
+      const codes = await accessCodesApi.getCodes();
+      setUserCodes(codes);
+      
+      // Validate active code from localStorage
+      if (activeCode && codes.includes(activeCode)) {
+        setIsUnlocked(true);
+        setIsAdmin(activeCode === '2425NK-1');
+      } else {
+        setIsUnlocked(false);
+        setIsAdmin(false);
+        try {
+          localStorage.setItem('namakecil_unlocked', 'false');
+          localStorage.removeItem('namakecil_active_code');
+        } catch {}
+      }
+    };
+    loadCodes();
+  }, [activeCode]);
+
+  const handleUnlockSuccess = (code: string) => {
+    setActiveCode(code);
+    setIsUnlocked(true);
+    setIsAdmin(code === '2425NK-1');
+    try {
+      localStorage.setItem('namakecil_unlocked', 'true');
+      localStorage.setItem('namakecil_active_code', code);
+    } catch {}
+  };
+
+  const handleLockAccess = () => {
+    setIsUnlocked(false);
+    setIsAdmin(false);
+    setActiveCode(null);
+    try {
+      localStorage.setItem('namakecil_unlocked', 'false');
+      localStorage.removeItem('namakecil_active_code');
+    } catch {}
+    setView('landing');
+  };
+
+  const handleAddCode = async (code: string) => {
+    const success = await accessCodesApi.addCode(code);
+    if (success) {
+      const codes = await accessCodesApi.getCodes();
+      setUserCodes(codes);
+    } else {
+      throw new Error('Failed to add code');
+    }
+  };
+
+  const handleDeleteCode = async (code: string) => {
+    const success = await accessCodesApi.deleteCode(code);
+    if (success) {
+      const codes = await accessCodesApi.getCodes();
+      setUserCodes(codes);
+    } else {
+      throw new Error('Failed to delete code');
+    }
+  };
   
   // Feed filters into Search dynamically (Preset from Onboarding)
   const [searchFilterPreset, setSearchFilterPreset] = useState<Partial<SearchFilters> | undefined>(undefined);
@@ -221,7 +290,16 @@ export default function App() {
                   Nama Kecil
                 </h1>
                 {isUnlocked ? (
-                  <span className="text-[9px] bg-amber-500 text-white font-extrabold px-1.5 py-0.5 rounded-md uppercase tracking-wider shadow-xs shadow-amber-500/10 animate-bounce">
+                  <span 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (window.confirm('Apakah Anda ingin menonaktifkan kode akses premium saat ini?')) {
+                        handleLockAccess();
+                      }
+                    }}
+                    className="text-[9px] bg-amber-500 text-white font-extrabold px-1.5 py-0.5 rounded-md uppercase tracking-wider shadow-xs shadow-amber-500/10 animate-bounce cursor-pointer select-none"
+                    title="Klik untuk menonaktifkan akses premium"
+                  >
                     PREMIUM
                   </span>
                 ) : (
@@ -241,15 +319,26 @@ export default function App() {
             </div>
           </div>
 
-          {/* Mobile Feedback Trigger Button */}
-          <button
-            id="mobile-btn-feedback"
-            onClick={() => setIsFeedbackModalOpen(true)}
-            className="md:hidden inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-mint/50 hover:bg-brand-mint text-brand-teal text-xs font-semibold select-none transition-all duration-200 active:scale-95 cursor-pointer"
-          >
-            <MessageCircle className="w-3.5 h-3.5" />
-            <span>Saran</span>
-          </button>
+          {/* Mobile Navigation Trigger Button */}
+          {isAdmin ? (
+            <button
+              id="mobile-btn-admin"
+              onClick={() => setView('admin')}
+              className="md:hidden inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-cream text-orange-650 text-xs font-semibold select-none transition-all duration-200 active:scale-95 cursor-pointer"
+            >
+              <Users className="w-3.5 h-3.5" />
+              <span>Akses</span>
+            </button>
+          ) : (
+            <button
+              id="mobile-btn-feedback"
+              onClick={() => setIsFeedbackModalOpen(true)}
+              className="md:hidden inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-mint/50 hover:bg-brand-mint text-brand-teal text-xs font-semibold select-none transition-all duration-200 active:scale-95 cursor-pointer"
+            >
+              <MessageCircle className="w-3.5 h-3.5" />
+              <span>Saran</span>
+            </button>
+          )}
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-1" id="desktop-nav">
@@ -297,14 +386,27 @@ export default function App() {
                 </span>
               )}
             </button>
-            <button
-              id="nav-btn-feedback"
-              onClick={() => setIsFeedbackModalOpen(true)}
-              className="px-4 py-2 rounded-xl text-xs font-semibold text-brand-darklight hover:bg-brand-mint/20 hover:text-brand-teal transition-all flex items-center gap-1.5 cursor-pointer"
-            >
-              <MessageCircle className="w-3.5 h-3.5" />
-              Saran & Masukan
-            </button>
+            {isAdmin ? (
+              <button
+                id="nav-btn-admin"
+                onClick={() => setView('admin')}
+                className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                  view === 'admin' ? 'bg-orange-50 text-orange-650' : 'text-brand-darklight hover:bg-slate-50'
+                }`}
+              >
+                <Users className="w-3.5 h-3.5" />
+                Akses Pengguna
+              </button>
+            ) : (
+              <button
+                id="nav-btn-feedback"
+                onClick={() => setIsFeedbackModalOpen(true)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-brand-darklight hover:bg-brand-mint/20 hover:text-brand-teal transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <MessageCircle className="w-3.5 h-3.5" />
+                Saran & Masukan
+              </button>
+            )}
           </nav>
         </div>
       </header>
@@ -383,6 +485,15 @@ export default function App() {
             onUpdateRating={handleUpdateRating}
           />
         )}
+
+        {view === 'admin' && (
+          <UserAccessPage
+            userCodes={userCodes}
+            onAddCode={handleAddCode}
+            onDeleteCode={handleDeleteCode}
+            onBack={() => setView('landing')}
+          />
+        )}
       </main>
 
       {/* 3. DYNAMIC PARENTING WISDOM BANNER FOOTER (Desktop only) */}
@@ -451,7 +562,8 @@ export default function App() {
       <UnlockModal
         isOpen={isUnlockModalOpen}
         onClose={() => setIsUnlockModalOpen(false)}
-        onUnlockSuccess={() => setIsUnlocked(true)}
+        onUnlockSuccess={handleUnlockSuccess}
+        userCodes={userCodes}
       />
 
       <FeedbackModal

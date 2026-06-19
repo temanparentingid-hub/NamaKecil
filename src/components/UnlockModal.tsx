@@ -9,10 +9,11 @@ const formatNumber = (num: number): string => {
 interface UnlockModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onUnlockSuccess: () => void;
+  onUnlockSuccess: (code: string) => void;
+  userCodes: string[];
 }
 
-export default function UnlockModal({ isOpen, onClose, onUnlockSuccess }: UnlockModalProps) {
+export default function UnlockModal({ isOpen, onClose, onUnlockSuccess, userCodes }: UnlockModalProps) {
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -24,11 +25,11 @@ export default function UnlockModal({ isOpen, onClose, onUnlockSuccess }: Unlock
     setError(null);
 
     const cleanCode = code.trim();
-    if (cleanCode === '2425NK-1' || cleanCode === '@temanparenting.id-2456n1') {
+    if (userCodes.includes(cleanCode)) {
       setSuccess(true);
       setError(null);
       setTimeout(() => {
-        onUnlockSuccess();
+        onUnlockSuccess(cleanCode);
         onClose();
         // Reset states
         setSuccess(false);
@@ -113,6 +114,36 @@ export default function UnlockModal({ isOpen, onClose, onUnlockSuccess }: Unlock
               </ul>
             </div>
 
+            {/* Code Input Form */}
+            <form onSubmit={handleSubmit} className="space-y-3" id="unlock-code-form">
+              <label htmlFor="code-input" className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                MASUKKAN KODE AKSES
+              </label>
+              <div className="flex gap-2">
+                <input
+                  id="code-input"
+                  type="text"
+                  placeholder="Contoh: 12345"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  className="flex-1 p-3 rounded-xl border border-slate-200 bg-brand-offwhite text-sm text-brand-dark focus:ring-2 focus:ring-brand-teal focus:border-transparent outline-none tracking-wide"
+                />
+                <button
+                  type="submit"
+                  id="btn-submit-code"
+                  className="px-5 py-3 bg-brand-teal hover:bg-brand-teal-hover text-white rounded-xl text-xs font-bold transition-all cursor-pointer"
+                >
+                  Aktifkan
+                </button>
+              </div>
+
+              {error && (
+                <p className="text-xs text-red-500 font-medium flex items-center gap-1 mt-1 animate-pulse" id="code-error-message">
+                  ⚠ {error}
+                </p>
+              )}
+            </form>
+
             {/* Admin Info Callout */}
             <div className="bg-orange-50/80 p-4 rounded-2xl border border-orange-100 space-y-3" id="admin-info-box">
               <div className="flex gap-2">
@@ -187,36 +218,6 @@ export default function UnlockModal({ isOpen, onClose, onUnlockSuccess }: Unlock
                 </p>
               </div>
             </div>
-
-            {/* Code Input Form */}
-            <form onSubmit={handleSubmit} className="space-y-3" id="unlock-code-form">
-              <label htmlFor="code-input" className="block text-xs font-semibold text-brand-darklight uppercase tracking-wider">
-                Masukkan Kode Akses
-              </label>
-              <div className="flex gap-2">
-                <input
-                  id="code-input"
-                  type="text"
-                  placeholder="Contoh: 12345"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  className="flex-1 p-3 rounded-xl border border-slate-200 bg-brand-offwhite text-sm text-brand-dark focus:ring-2 focus:ring-brand-teal focus:border-transparent outline-none tracking-wide"
-                />
-                <button
-                  type="submit"
-                  id="btn-submit-code"
-                  className="px-5 py-3 bg-brand-teal hover:bg-brand-teal-hover text-white rounded-xl text-xs font-bold transition-all"
-                >
-                  Aktifkan
-                </button>
-              </div>
-
-              {error && (
-                <p className="text-xs text-red-500 font-medium flex items-center gap-1 mt-1 animate-pulse" id="code-error-message">
-                  ⚠ {error}
-                </p>
-              )}
-            </form>
           </div>
         )}
       </div>
