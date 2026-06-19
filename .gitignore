@@ -10,3 +10,6 @@ coverage/
 # Cloudflare Wrangler
 .wrangler/
 backend/.wrangler/
+
+.dev.vars*
+!.dev.vars.example
